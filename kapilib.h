@@ -6,23 +6,29 @@ For more convenient use, type using namespace kapi; in those files
 */
 
 #pragma once
+
 #include <iostream>
 #include <fstream>
 #include <iomanip>
 #include <cstdlib>
 #include <cstdint>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace std;
 
 namespace kapi {
-    // Clear screen
+    // Get username
+    string GetUsername();
+    // Clear console
     void ClearScreen();
     // Pause execution of the program
     void Pause();
+    // Return number of logical cores in CPU
+    int GetCPUCoreCount();
     // Convert string to hexadecimal string (2nd argument - lowercase is 0, uppercase (default) is 1, 3rd is a separator)
-    string StringToHex(string str, bool u = true, char sep = '\0');
+    string StringToHex(const string& str, bool u = true, char sep = '\0');
     // Convert a file to a vector<unsigned char>, return 0 if file wasn't found
     bool FileToVector(const string& filename, vector<uint8_t>& data);
     // Convert a vector<unsigned char> to a file, create file if it doesn't exist
@@ -33,6 +39,14 @@ namespace kapi {
 #define KAPI_IMPLEMENTED
 
 namespace kapi {
+    inline string GetUsername() {
+        #ifdef _WIN32
+        const char* username = getenv("USERNAME");
+        #else
+        const char* username = getenv("USER");
+        #endif
+        if (username) return string(username); else return "";
+    }
     inline void ClearScreen() {
         #ifdef _WIN32
         system("CLS");
@@ -44,7 +58,10 @@ namespace kapi {
         cout << "Press ENTER to continue";
         cin.get();
     }
-    inline string StringToHex(string str, bool u, char sep) {
+    inline int GetCPUCoreCount() {
+        return thread::hardware_concurrency();
+    }
+    inline string StringToHex(const string& str, bool u, char sep) {
         stringstream ss;
         ss << hex;
         int len = str.length();
