@@ -13,6 +13,7 @@ For more convenient use, type using namespace kapi; in those files
 #include <cstdlib>
 #include <cstdint>
 #include <string>
+#include <sstream>
 #include <thread>
 #include <vector>
 
@@ -27,12 +28,14 @@ namespace kapi {
     void Pause();
     // Return number of logical cores in CPU
     int GetCPUCoreCount();
-    // Convert string to hexadecimal string (2nd argument - lowercase is 0, uppercase (default) is 1, 3rd is a separator)
-    string StringToHex(const string& str, bool u = true, char sep = '\0');
+    // Convert vector to hexadecimal string (2nd argument - lowercase is 0, uppercase (default) is 1, 3rd is a separator)
+    string ToHex(const vector<uint8_t> str, bool u = true, char sep = '\0');
     // Convert a file to a vector<unsigned char>, return 0 if file wasn't found
     bool FileToVector(const string& filename, vector<uint8_t>& data);
     // Convert a vector<unsigned char> to a file, create file if it doesn't exist
     void VectorToFile(const string& filename, const vector<uint8_t>& data);
+    // Returns true if 2 files are different
+    inline bool AreFilesDifferent(string f1, string f2);
 }
 
 #ifndef KAPI_IMPLEMENTED
@@ -61,13 +64,13 @@ namespace kapi {
     inline int GetCPUCoreCount() {
         return thread::hardware_concurrency();
     }
-    inline string StringToHex(const string& str, bool u, char sep) {
+    inline string ToHex(const vector<uint8_t> str, bool u, char sep) {
         stringstream ss;
         ss << hex;
-        int len = str.length();
+        int len = str.size();
         if (u) ss << uppercase;
         for (int i = 0; i < len; i++) {
-            ss << setw(2) << setfill('0') << static_cast<int>(str[i]) << sep;
+            ss << setw(2) << setfill('0') << static_cast<int>(str[i]);
             if (sep != '\0' && i != len - 1) {
                 ss << sep;
             }
@@ -100,6 +103,21 @@ namespace kapi {
         ofstream out(filename, ios::binary);
         out.write(reinterpret_cast<const char*>(data.data()), data.size());
         out.close();
+    }
+    inline bool AreFilesDifferent(string f1, string f2) {
+        bool flag = false;
+        vector<uint8_t> data1, data2;
+        if (!FileToVector(f1, data1)) return true;
+        if (!FileToVector(f2, data2)) return true;
+        size_t len1 = data1.size(), len2 = data2.size();
+        if (len1 != len2) return 1;
+        for (size_t i = 0; i < len1; i++) {
+            if (data1[i] != data2[i]) {
+                flag = 1;
+                break;
+            }
+        }
+        return flag;
     }
 }
 #endif
